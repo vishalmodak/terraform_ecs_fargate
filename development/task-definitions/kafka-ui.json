@@ -1,0 +1,70 @@
+[
+  {
+    "name": "kafka-rest-proxy",
+    "image": "confluentinc/cp-kafka-rest:5.0.0",
+    "cpu": 512,
+    "memoryReservation": 512,
+    "essential": true,
+    "portMappings": [
+      {
+        "containerPort": 8082,
+        "hostPort": 8082
+      }
+    ],
+    "environment": [
+      {
+          "name": "KAFKA_REST_LISTENERS",
+          "value": "http://localhost:8082/"
+      },
+      {
+          "name": "KAFKA_REST_HOST_NAME",
+          "value": "localhost"
+      },
+      {
+          "name": "KAFKA_REST_BOOTSTRAP_SERVERS",
+          "value": "${kafka_lb_dns}:9092"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "secretOptions": null,
+      "options": {
+        "awslogs-group": "${proxy_log_group}",
+        "awslogs-region": "us-east-2",
+        "awslogs-stream-prefix": "ecs"
+      }
+    }
+  },
+  {
+    "name": "kafka-ui",
+    "image": "landoop/kafka-topics-ui:0.9.4",
+    "cpu": 512,
+    "memoryReservation": 512,
+    "essential": true,
+    "portMappings": [
+      {
+        "containerPort": 8000,
+        "hostPort": 8000
+      }
+    ],
+    "environment": [
+      {
+          "name": "KAFKA_REST_PROXY_URL",
+          "value": "http://localhost:8082/"
+      },
+      {
+          "name": "PROXY",
+          "value": "true"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "secretOptions": null,
+      "options": {
+        "awslogs-group": "${ui_log_group}",
+        "awslogs-region": "us-east-2",
+        "awslogs-stream-prefix": "ecs"
+      }
+    }
+  }
+]

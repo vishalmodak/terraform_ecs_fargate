@@ -1,0 +1,84 @@
+[
+  {
+    "name": "postgres",
+    "image": "${image}",
+    "cpu": 512,
+    "memoryReservation": 512,
+    "essential": true,
+    "portMappings": [
+      {
+        "containerPort": 5432,
+        "hostPort": 5432
+      }
+    ],
+    "dependsOn": [
+      {
+        "containerName": "postgres_proxy",
+        "condition": "HEALTHY"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "secretOptions": null,
+      "options": {
+        "awslogs-group": "${log_group}",
+        "awslogs-region": "us-east-2",
+        "awslogs-stream-prefix": "ecs"
+      }
+    }
+  },
+  {
+    "name": "postgres_proxy",
+    "image": "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.9.1.0-prod",
+    "cpu": 256,
+    "memoryReservation": 512,
+    "essential": true,
+    "portMappings": [
+      {
+        "containerPort": 9901,
+        "hostPort": 9901,
+        "protocol": "tcp"
+      },
+      {
+        "containerPort": 15000,
+        "hostPort": 15000,
+        "protocol": "tcp"
+      },
+      {
+        "containerPort": 15001,
+        "hostPort": 15001,
+        "protocol": "tcp"
+      }
+    ],
+    "environment": [
+      {
+        "name": "APPMESH_VIRTUAL_NODE_NAME",
+         "value": "mesh/lse/virtualNode/postgres_node"
+      },
+      {
+        "name": "ENVOY_LOG_LEVEL",
+         "value": "info"
+      }
+    ],
+    "healthCheck": {
+      "command": [
+        "CMD-SHELL",
+        "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE"
+      ],
+      "startPeriod": 10,
+      "interval": 5,
+      "timeout": 2,
+      "retries": 3
+    },
+    "user": "1337",
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "secretOptions": null,
+      "options": {
+        "awslogs-group": "${proxy_log_group}",
+        "awslogs-region": "us-east-2",
+        "awslogs-stream-prefix": "ecs"
+      }
+    }
+  }
+]
